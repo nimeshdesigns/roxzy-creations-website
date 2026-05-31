@@ -1,0 +1,215 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Authenticated client profile configurations including registration data and administrative role",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Authentication User ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the client"
+        },
+        "email": {
+          "type": "string",
+          "description": "Google email address of the client"
+        },
+        "avatar": {
+          "type": "string",
+          "description": "Profile picture URL from Google Account"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["Admin", "Member"],
+          "description": "Access control role"
+        }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "Review": {
+      "title": "Client Review",
+      "description": "Testimonial left by verified clients",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "rating": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "accepted", "Decliend"],
+          "description": "Status for admin moderation. Typo matches user request."
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "userEmail": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "name", "comment", "rating", "status", "createdAt"]
+    },
+    "Order": {
+      "title": "Transaction Order",
+      "description": "Service purchase order with custom payments verification",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "userEmail": {
+          "type": "string"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "whatsappNumber": {
+          "type": "string"
+        },
+        "packageType": {
+          "type": "string",
+          "description": "Name of package or graphic design sample"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["graphic_design", "whatsapp_reactions", "social_boosting"]
+        },
+        "paymentScreenshotUrl": {
+          "type": "string",
+          "description": "Link containing photo of the completed payment reference"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending_verification", "completed", "accepted", "declined", "delivered"],
+          "description": "State transition tracker for orders"
+        },
+        "amountLkr": {
+          "type": "string"
+        },
+        "submittedAt": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "userEmail", "packageType", "paymentScreenshotUrl", "status", "submittedAt"]
+    },
+    "WhatsappPrice": {
+      "title": "WhatsApp Price Package",
+      "description": "Admin configurable pricing packages for whatsapp chemical interaction services",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "string",
+          "description": "E.g. 1 Day, 3 Days..."
+        },
+        "priceLkr": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "duration", "priceLkr"]
+    },
+    "GraphicDesign": {
+      "title": "Graphic Design Portfolio Sample",
+      "description": "Visual samples of brand assets that clients can view or purchase",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "priceLkr": {
+          "type": "string"
+        },
+        "photo": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "name", "description", "priceLkr", "photo"]
+    },
+    "PaymentMethod": {
+      "title": "Payment Method Provider Setup",
+      "description": "Active payment accounts configurations editable by administrators",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        }
+      },
+      "required": ["id", "name", "details"]
+    },
+    "SocialLink": {
+      "title": "Social Contact Details Link",
+      "description": "External handles displayed in social channels grids",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "iconName": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "name", "url"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Client profile documents mapped by user authentication UID"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Client feedback on graphic products, moderated by admins"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Active transactional records of designs or boosted interactions"
+    },
+    "/whatsapp_prices/{packageId}": {
+      "schema": "WhatsappPrice",
+      "description": "Pricing tiers and operational intervals configurations for whatsapp reactions"
+    },
+    "/graphic_designs/{designId}": {
+      "schema": "GraphicDesign",
+      "description": "Portfolio representations with sample attributes display"
+    },
+    "/payment_methods/{methodId}": {
+      "schema": "PaymentMethod",
+      "description": "Details regarding direct bank coordinates or electronic wallets"
+    },
+    "/social_links/{linkId}": {
+      "schema": "SocialLink",
+      "description": "Navigational elements for custom external contact links"
+    }
+  }
+}
