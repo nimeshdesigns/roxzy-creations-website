@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { 
   getFirestore, 
@@ -23,6 +24,9 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth();
 export const googleProvider = new GoogleAuthProvider();
+
+// Initialize Google Analytics safely (checking if window object exists for build environments)
+export const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
 
 // Setup Google Sign provider settings matching verified domain constraints
 googleProvider.setCustomParameters({
