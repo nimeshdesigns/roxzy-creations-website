@@ -1,105 +1,39 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Global Safety Net
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
+    
+    // Helper function to check if the logged-in user is an Admin
     function isAdmin() {
-      return isSignedIn() && (
-        (request.auth.token.email == "nimesh.designs.site@gmail.com" && request.auth.token.email_verified == true) ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "Admin")
-      );
+      return request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    function incoming() {
-      return request.resource.data;
-    }
-
-    function existing() {
-      return resource.data;
-    }
-
-    // 1. Users collection rules
+    // Users Collection Rules
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && isOwner(userId) && 
-        incoming().uid == userId && 
-        (incoming().role == "Member" || (incoming().role == "Admin" && request.auth.token.email == "nimesh.designs.site@gmail.com" && request.auth.token.email_verified == true)); // Seed Admin allowed
-      allow update: if isOwner(userId) ? (
-        // Owners can edit name and avatar but CANNOT escalate their own role
-        incoming().role == existing().role &&
-        incoming().uid == existing().uid &&
-        incoming().email == existing().email
-      ) : isAdmin(); // Admins can change roles or update anything
-      allow delete: if isAdmin();
+      // Users can read/write their own profile data; Admins can read/write ALL profiles
+      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
     }
 
-    // 2. Reviews collection rules
-    // Schema: name, comment, rating, status: 'pending'|'accepted'|'Decliend', createdAt, userEmail
-    match /reviews/{reviewId} {
-      allow read: if (existing().status == "accepted") || isAdmin();
-      allow list: if (resource.data.status == "accepted") || isAdmin();
-      allow create: if isSignedIn() &&
-        incoming().userEmail == request.auth.token.email &&
-        incoming().status == "pending" &&
-        incoming().rating >= 1 && incoming().rating <= 5 &&
-        incoming().comment is string && incoming().comment.size() <= 1000;
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
-    }
-
-    // 3. Orders collection rules
-    // Schema: id, userEmail, packageType, info, paymentScreenshotUrl, status, submittedAt
+    // Orders Collection Rules
     match /orders/{orderId} {
-      allow read: if isAdmin() || (isSignedIn() && existing().userEmail == request.auth.token.email);
-      allow list: if isAdmin() || (isSignedIn() && resource.data.userEmail == request.auth.token.email);
-      allow create: if isSignedIn() &&
-        incoming().userEmail == request.auth.token.email &&
-        incoming().status == "pending_verification" &&
-        incoming().paymentScreenshotUrl is string && incoming().paymentScreenshotUrl.size() > 0;
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      // Users can create orders and view their own; Admins can manage all orders
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
-    // 4. Whatsapp Prices rules
-    match /whatsapp_prices/{packageId} {
-      allow read: if true;
-      allow write: if isAdmin();
+    // Contacts / Messages Collection Rules
+    match /contacts/{contactId} {
+      // Anyone can submit a contact form message; Only admins can read/manage them
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
-
-    // 5. Graphic Designs rules
-    match /graphic_designs/{designId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // 6. Payment Methods rules
-    match /payment_methods/{methodId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // 7. Social Links rules
-    match /social_links/{linkId} {
-      allow read: if true;
-      allow write: if isAdmin();
+    
+    // Reviews Collection Rules
+    match /reviews/{reviewId} {
+      allow read: if true; // Public can see reviews
+      allow create: if request.auth != null; // Registered users can write reviews
+      allow update, delete: if isAdmin(); // Only admins can moderate reviews
     }
   }
 }
